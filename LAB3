@@ -1,0 +1,150 @@
+To connect two Docker containers on an Ubuntu machine, you can follow these steps. Docker provides multiple ways to allow containers to communicate with each other, such as using networks or shared volumes.
+
+### Step 1: Start Docker Service
+
+Ensure Docker is running on your Ubuntu machine:
+
+
+sudo systemctl start docker sudo systemctl enable docker
+
+
+### Step 2: Start the Docker Service
+
+Ensure the Docker service is running:
+
+sudo systemctl start docker sudo systemctl enable docker
+
+### Step 3: Fix Permission Issues
+
+#### Check Docker Group
+#### 3.1. Add Your User to the docker Group
+
+Add your current user to the docker group:
+
+sudo usermod -aG docker $USER
+
+
+#### 3.2. Log Out and Back In
+
+For the group changes to take effect, log out of the current session and log back in. Alternatively, restart your shell:
+
+newgrp docker
+
+
+
+### *STEP 4: Create a New Network with Custom Settings*
+
+You cannot edit an existing network's settings, but you can create a new one with specific configurations like custom subnets or gateways.
+
+For example, to create a network with a custom subnet and gateway:
+
+docker network create --subnet=192.168.1.0/24 --gateway=192.168.1.1 my_network
+
+
+### Step 5: Start Containers in the Same Network
+
+Run your containers, ensuring they are attached to the same network. For example:
+
+#### Container 1:
+
+
+docker run -dit --name container1 --network my_network ubuntu
+
+
+#### Container 2:
+
+docker run -dit --name container2 --network my_network ubuntu
+
+
+### Step 6: Test Connectivity
+
+Log into one container and test connectivity to the other:
+
+#### Access container1:
+
+docker exec -it container1 bash
+
+
+*Set a Password for the Root User*: Inside container1, set the root password by running the following command:
+
+
+passwd
+
+give your password here
+
+2: *Generate an SSH Key Pair*:
+
+Inside container1, run the following command to generate an SSH key pair. Press Enter at the prompts to use the default file location (/root/.ssh/id_rsa), and optionally set a passphrase:
+
+
+ssh-keygen -t rsa -b 4096 -C "container1"
+
+
+3. *View the Public Key*:
+
+
+cat /root/.ssh/id_rsa.pub
+
+
+This will display the public key. You'll need this to add to container2 to allow SSH connections from container1 to container2.
+
+### **Step 7: Add the Public Key to container2**
+
+1. **Log into container2**:
+
+
+docker exec -it container2 bash
+
+*Set a Password for the Root User*: Inside container2, set the root password by running the following command:
+
+
+passwd
+
+give your password here
+
+2. **Create the .ssh Directory** (if not already there) and Set Permissions:
+
+mkdir -p /root/.ssh chmod 700 /root/.ssh
+
+
+3. **Add the Public Key to authorized_keys**:
+    
+    Paste the public key you copied from container1 into container2's authorized_keys file.
+    
+    You can either copy it manually or use the echo command to append the key:
+    
+
+echo "paste-your-public-key-here" >> /root/.ssh/authorized_keys chmod 600 /root/.ssh/authorized_keys
+
+    *Important*: Ensure that the key is copied exactly as shown from container1's id_rsa.pub.
+
+### *Step 9: Start SSH Service in Both Containers*
+
+1. **Start the SSH service in container1**:
+
+service ssh start
+
+
+2. **Start the SSH service in container2**:
+
+service ssh start
+
+service ssh start
+
+---
+
+### **Step 10: Test SSH Connection from container1 to container2**
+
+Now, try SSHing from container1 to container2 using the container name:
+
+1. **Log into container1** (if not already inside):
+
+docker exec -it container1 bash
+
+
+2. **SSH into container2**:
+
+ssh root@container2
+
+
+If everything is configured correctly, you should log into container2 without needing a password (because of the SSH key-based authentication).
